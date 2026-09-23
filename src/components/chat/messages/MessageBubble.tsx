@@ -105,6 +105,25 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     return null;
   }, [hasReplyReference, replyToMessageId, replyToExternalId, allMessages]);
 
+  const displayContent = useMemo(() => {
+    if (!message.content || !message.sender) return message.content;
+    
+    const senderIdentity = message.sender.available_name || message.sender.display_name || message.sender.name;
+    if (!senderIdentity) return message.content;
+
+    const textPrefix = `*${senderIdentity}*:\n`;
+    if (message.content.startsWith(textPrefix)) {
+      return message.content.substring(textPrefix.length);
+    }
+    
+    const htmlPrefix = `<p><strong>${senderIdentity}</strong>:</p>`;
+    if (message.content.startsWith(htmlPrefix)) {
+      return message.content.substring(htmlPrefix.length);
+    }
+    
+    return message.content;
+  }, [message.content, message.sender]);
+
   const handleCopyMessage = () => {
     if (message.content) {
       navigator.clipboard.writeText(message.content);
@@ -198,9 +217,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       if (fileType === 'location') {
         return (
           <>
-            {message.content && (
+            {displayContent && (
               <MessageText
-                content={message.content}
+                content={displayContent}
                 isPrivateNote={isPrivate}
                 contentType={message.content_type}
                 contentAttributes={message.content_attributes}
@@ -212,9 +231,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       } else if (fileType === 'image' || fileType.includes('image/')) {
         return (
           <>
-            {message.content && (
+            {displayContent && (
               <MessageText
-                content={message.content}
+                content={displayContent}
                 isPrivateNote={isPrivate}
                 contentType={message.content_type}
                 contentAttributes={message.content_attributes}
@@ -226,9 +245,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       } else if (fileType === 'audio' || fileType.includes('audio/')) {
         return (
           <>
-            {message.content && (
+            {displayContent && (
               <MessageText
-                content={message.content}
+                content={displayContent}
                 isPrivateNote={isPrivate}
                 contentType={message.content_type}
                 contentAttributes={message.content_attributes}
@@ -240,9 +259,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       } else if (fileType === 'video' || fileType.includes('video/')) {
         return (
           <>
-            {message.content && (
+            {displayContent && (
               <MessageText
-                content={message.content}
+                content={displayContent}
                 isPrivateNote={isPrivate}
                 contentType={message.content_type}
                 contentAttributes={message.content_attributes}
@@ -254,9 +273,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       } else {
         return (
           <>
-            {message.content && (
+            {displayContent && (
               <MessageText
-                content={message.content}
+                content={displayContent}
                 isPrivateNote={isPrivate}
                 contentType={message.content_type}
                 contentAttributes={message.content_attributes}
@@ -274,7 +293,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       case 'incoming_email':
         return (
           <MessageText
-            content={message.content}
+            content={displayContent}
             isPrivateNote={isPrivate}
             contentType={message.content_type}
             contentAttributes={message.content_attributes}
@@ -291,21 +310,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       case 'cards':
         return (
           <MessageCarousel
-            content={message.content}
+            content={displayContent}
             contentAttributes={message.content_attributes}
           />
         );
       case 'input_select':
         return (
           <MessageInputSelect
-            content={message.content}
+            content={displayContent}
             contentAttributes={message.content_attributes}
           />
         );
       default:
         return (
           <MessageText
-            content={message.content}
+            content={displayContent}
             isPrivateNote={isPrivate}
             contentType={message.content_type}
             contentAttributes={message.content_attributes}
@@ -331,9 +350,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
         <div className="mb-1">
           {renderContextMenu(
             <div
-              className={`rounded-lg px-3 py-1.5 ${isPrivate
+              className={`rounded-lg px-3 py-1.5 ${isDeleted ? 'cursor-default' : 'cursor-pointer'} ${isPrivate
                 ? 'bg-orange-50 border border-orange-200 dark:bg-orange-950/20 dark:border-orange-800/50'
-                : 'bg-muted/50 border border-border/50'
+                : 'bg-muted/50 hover:bg-muted/70 border border-border/50'
                 }`}
             >
               {/* Indicador de mensagem privada */}
@@ -472,16 +491,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
         {renderContextMenu(
           <div
-            className={`rounded-lg px-3 py-2 ${
+            className={`rounded-lg px-3 py-2 ${isDeleted ? 'cursor-default' : 'cursor-pointer'} ${
               isOwn ? 'rounded-tr-[4px]' : isThreadReply ? 'rounded-tl-md' : ''
             } ${isPrivate
                 ? 'bg-orange-50 border-2 border-orange-200 border-l-4 border-l-orange-400 dark:bg-orange-950/20 dark:border-orange-800/50 dark:border-l-orange-600'
                 : isFromAgent
-                  ? 'bg-primary text-primary-foreground'
+                  ? 'bg-primary text-primary-foreground hover:bg-primary/85'
                   : isFromBot
                     ? 'bg-purple-600 text-white dark:bg-purple-700'
                     : isOwn
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground hover:bg-primary/85'
                       : isThreadReply
                         ? 'bg-muted/70 border border-l-2 border-l-primary/40 dark:bg-muted/50' // Estilo mais sutil para replies
                         : 'bg-muted border'

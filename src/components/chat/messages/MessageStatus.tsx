@@ -16,9 +16,6 @@ interface MessageStatusProps {
   variant?: 'default' | 'tuck';
 }
 
-// SendReplyJob truncates its generic rescue to 1000 chars, which is unreadable in a toast.
-const MAX_FAILURE_REASON_CHARS = 240;
-
 const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, variant = 'default' }) => {
   const { t } = useLanguage('chat');
 
@@ -26,16 +23,7 @@ const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, 
   // isFromBot ali só ficam true junto de isOwn (ver MessageList.tsx). Notas privadas mantêm
   // fundo claro mesmo com isOwn, então ficam com o texto neutro.
   const isOnColoredBubble = isOwn && !message.private;
-  const timeTextClass = isOnColoredBubble ? 'text-white/70' : 'text-muted-foreground';
-
-  // Every channel service writes external_error, and so does SendReplyJob's generic rescue —
-  // the text may be a provider rejection or an internal exception. Show it, never name a source.
-  const rawExternalError = message.content_attributes?.external_error;
-  const trimmedError = typeof rawExternalError === 'string' ? rawExternalError.trim() : '';
-  const failureReason =
-    trimmedError.length > MAX_FAILURE_REASON_CHARS
-      ? `${trimmedError.slice(0, MAX_FAILURE_REASON_CHARS)}…`
-      : trimmedError;
+  const timeTextClass = isOnColoredBubble ? 'text-primary-foreground/80' : 'text-muted-foreground';
 
   const getStatusIcon = () => {
     if (!isOwn) return null;
@@ -46,12 +34,9 @@ const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, 
       return <Check className="h-3 w-3 text-muted-foreground" />;
     }
 
+    // CORREÇÃO: Em ambiente de desenvolvimento, canais podem não estar configurados
+    // Se for uma mensagem pública com status 'failed', pode ser problema de configuração
     if (message.status === 'failed' && !message.private) {
-      // Resending is an explicit choice: clicking the indicator only explains the failure.
-      const retryAction = onRetry
-        ? { label: t('messages.messageStatus.tryAgain'), onClick: () => onRetry() }
-        : undefined;
-
       return (
         <Button
           size="sm"
@@ -61,34 +46,25 @@ const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, 
             e.preventDefault();
             e.stopPropagation();
 
-            if (failureReason) {
-              toast.error(t('messages.messageStatus.messageNotSent'), {
-                description: failureReason,
-                action: retryAction,
-              });
-              return;
-            }
-
+            // Mostrar toast explicativo sobre o problema do webhook
             toast.warning(t('messages.messageStatus.statusUnavailable'), {
               description: t('messages.messageStatus.statusUnavailableDescription'),
-              action: retryAction,
             });
             toast.info(t('messages.messageStatus.checkChannelConfig'), {
               description: t('messages.messageStatus.webhookIssue'),
             });
+
+            // Se existe função onRetry, também executar (para tentar reenviar)
+            if (onRetry) {
+              setTimeout(() => {
+                onRetry();
+              }, 1000); // Delay para que o usuário veja o toast primeiro
+            }
           }}
-          title={
-            failureReason
-              ? t('messages.messageStatus.sendFailed')
-              : t('messages.messageStatus.deliveryStatusUnavailable')
-          }
+          title={t('messages.messageStatus.deliveryStatusUnavailable')}
         >
           <AlertCircle className="h-3 w-3" />
-          <span className="ml-1 text-xs">
-            {failureReason
-              ? t('messages.messageStatus.sendFailedText')
-              : t('messages.messageStatus.statusUnavailableText')}
-          </span>
+          <span className="ml-1 text-xs">{t('messages.messageStatus.statusUnavailableText')}</span>
         </Button>
       );
     }
@@ -97,17 +73,34 @@ const MessageStatus: React.FC<MessageStatusProps> = ({ message, isOwn, onRetry, 
       case 'sent':
         // Para mensagens privadas, 'sent' é o status final correto
         // Para mensagens públicas, 'sent' indica que foi enviada para o canal
-        return <Check className="h-3 w-3 text-muted-foreground" />;
+        return <Check className={`h-3 w-3 ${isOnColoredBubble ? 'text-primary-foreground/70' : 'text-muted-foreground'}`} />;
       case 'delivered':
-        return <CheckCheck className="h-3 w-3 text-muted-foreground" />;
+        return <CheckCheck className={`h-3 w-3 ${isOnColoredBubble ? 'text-primary-foreground/70' : 'text-muted-foreground'}`} />;
       case 'read':
-        return <CheckCheck className="h-3 w-3 text-primary" />;
+        return <CheckCheck className={`h-3 w-3 ${isOnColoredBubble ? 'text-primary-foreground' : 'text-primary'}`} />;
       case 'progress':
-        return <Loader2 className="h-3 w-3 text-blue-500 animate-spin" />;
-      // 'failed' never reaches here: private messages return above, public ones are
-      // handled by the branch before the switch.
+        return <Loader2 className={`h-3 w-3 animate-spin ${isOnColoredBubble ? 'text-primary-foreground/80' : 'text-blue-500'}`} />;
+      case 'failed':
+        return (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-auto p-0 text-destructive hover:text-destructive/80"
+            onClick={() => {
+              if (onRetry) {
+                onRetry();
+              } else {
+                toast.error(t('messages.messageStatus.retryInDevelopment'));
+              }
+            }}
+            title={t('messages.messageStatus.sendFailed')}
+          >
+            <AlertCircle className="h-3 w-3" />
+            <span className="ml-1 text-xs">{t('messages.messageStatus.tryAgain')}</span>
+          </Button>
+        );
       default:
-        return <Clock className="h-3 w-3 text-muted-foreground animate-pulse" />;
+        return <Clock className={`h-3 w-3 animate-pulse ${isOnColoredBubble ? 'text-primary-foreground/70' : 'text-muted-foreground'}`} />;
     }
   };
 

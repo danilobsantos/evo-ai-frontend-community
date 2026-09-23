@@ -126,7 +126,10 @@ const MessageText: React.FC<MessageTextProps> = ({
                         safeContent.trim().startsWith('<!doctype') ||
                         safeContent.trim().startsWith('<html') ||
                         safeContent.trim().startsWith('<HTML') ||
-                        (safeContent.includes('<') && safeContent.includes('</') && safeContent.length > 50);
+                        contentType === 'input_email' ||
+                        contentType === 'incoming_email' ||
+                        (safeContent.includes('<body') && safeContent.includes('</body')) ||
+                        (safeContent.includes('<table') && safeContent.includes('</table'));
 
   if (isHtmlContent && !isPrivateNote) {
     const sanitizedHTML = sanitizeEmailHTML(safeContent);
@@ -164,13 +167,15 @@ const MessageText: React.FC<MessageTextProps> = ({
   // Renderizar HTML sanitizado para exibir corretamente tags como <p>, <b>, etc.
   if (safeContent.includes('<') && safeContent.includes('</')) {
     let sanitizedHTML = isPrivateNote ? safeContent : sanitizeEmailHTML(safeContent);
-    if (isPrivateNote) {
-      sanitizedHTML = sanitizedHTML.replace(/color\s*:[^;"']*;?/gi, '');
-    }
+    
+    // Remover inline styles de cor e tamanho para harmonizar com o tema do balão
+    sanitizedHTML = sanitizedHTML.replace(/color\s*:[^;"']*;?/gi, '');
+    sanitizedHTML = sanitizedHTML.replace(/font-size\s*:[^;"']*;?/gi, '');
+    
     return (
       <div
         className="whitespace-pre-wrap break-words rich-content"
-        style={isPrivateNote ? { color: 'inherit' } : undefined}
+        style={{ color: 'inherit' }}
         dangerouslySetInnerHTML={{ __html: sanitizedHTML }}
       />
     );
@@ -233,7 +238,7 @@ const MessageText: React.FC<MessageTextProps> = ({
   const parsedContent = parseMessageContent(safeContent);
 
   return (
-    <div className="whitespace-pre-wrap break-words text-sm">
+    <div className="whitespace-pre-wrap break-words">
       {parsedContent.elements}
       {parsedContent.detectedUrls.length > 0 && (
         <div className="mt-1">
