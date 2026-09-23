@@ -1,5 +1,4 @@
-import { Role } from "./rbac";
-
+import { Role } from './rbac';
 
 export interface LoginRequest {
   email: string;
@@ -95,6 +94,7 @@ export interface UISettings {
   conversation_display_type?: string;
   editor_message_key?: 'enter' | 'cmd_enter';
   font_size?: 'small' | 'medium' | 'large';
+  message_signature_enabled?: boolean;
   [key: string]: unknown;
 }
 

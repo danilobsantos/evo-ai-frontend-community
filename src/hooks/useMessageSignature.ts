@@ -1,3 +1,6 @@
+// React is provided by the application runtime, even when its types are not
+// available in the current TypeScript project configuration.
+// @ts-expect-error React types are resolved by the consuming application.
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,19 +12,35 @@ export const useMessageSignature = () => {
   const { user } = useAuth();
   const [isSignatureEnabled, setIsSignatureEnabled] = useState<boolean>(false);
 
-  // Carregar preferência do localStorage ao montar
+  // Carregar preferência do ui_settings ou localStorage
   useEffect(() => {
-    const savedPreference = localStorage.getItem('message_signature_enabled');
-    if (savedPreference !== null) {
-      setIsSignatureEnabled(savedPreference === 'true');
+    if (user?.ui_settings?.message_signature_enabled !== undefined) {
+      setIsSignatureEnabled(!!user.ui_settings.message_signature_enabled);
+    } else {
+      const savedPreference = localStorage.getItem('message_signature_enabled');
+      if (savedPreference !== null) {
+        setIsSignatureEnabled(savedPreference === 'true');
+      }
     }
-  }, []);
+  }, [user?.ui_settings?.message_signature_enabled]);
 
   // Toggle da assinatura
   const toggleSignature = useCallback(() => {
-    setIsSignatureEnabled(prev => {
+    setIsSignatureEnabled((prev: boolean) => {
       const newValue = !prev;
       localStorage.setItem('message_signature_enabled', String(newValue));
+
+      // Persistir no backend
+      import('@/services/profile/profileService').then(({ profileService }) => {
+        profileService
+          .updateUISettings({ message_signature_enabled: newValue } as unknown as Parameters<
+            typeof profileService.updateUISettings
+          >[0])
+          .catch(err => {
+            console.error('Failed to save signature preference to backend:', err);
+          });
+      });
+
       return newValue;
     });
   }, []);
