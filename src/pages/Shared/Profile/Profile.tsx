@@ -45,7 +45,7 @@ import { getAudioSettings, playNotificationSoundPreview } from '@/utils/audioNot
 import { getModifierKey } from '@/utils/platform';
 import { normalizeAvatarUrl } from '@/utils/avatarUrl';
 import { ProfilePhotoUploader, TwoFactorSetup } from '@/components/shared/profile';
-import { Switch } from '@evoapi/design-system/switch';
+
 import { useMessageIdentity } from '@/hooks/useMessageIdentity';
 
 const SECTION_TO_TAB: Record<string, string> = {
