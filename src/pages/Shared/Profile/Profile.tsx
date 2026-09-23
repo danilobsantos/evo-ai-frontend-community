@@ -45,6 +45,8 @@ import { getAudioSettings, playNotificationSoundPreview } from '@/utils/audioNot
 import { getModifierKey } from '@/utils/platform';
 import { normalizeAvatarUrl } from '@/utils/avatarUrl';
 import { ProfilePhotoUploader, TwoFactorSetup } from '@/components/shared/profile';
+import { Switch } from '@evoapi/design-system/switch';
+import { useMessageIdentity } from '@/hooks/useMessageIdentity';
 
 const SECTION_TO_TAB: Record<string, string> = {
   'personal-data': 'dados',
@@ -62,6 +64,7 @@ const TAB_TO_SECTION: Record<string, string> = {
 
 const Profile = () => {
   const { user, refreshUser, logout } = useAuth();
+  const { isIdentityEnabled, toggleIdentity } = useMessageIdentity();
   const { t } = useLanguage('profile');
   const normalizedUserAvatar = normalizeAvatarUrl(user?.avatar_url);
   const modifierKey = getModifierKey(); // 'Cmd' on Mac, 'Ctrl' on others
@@ -856,7 +859,19 @@ const Profile = () => {
               rows={4}
             />
           </div>
-          <div className="flex justify-end">
+          
+          <div className="flex items-center space-x-2 pt-2">
+            <Switch
+              id="identity-toggle"
+              checked={isIdentityEnabled}
+              onCheckedChange={toggleIdentity}
+            />
+            <Label htmlFor="identity-toggle" className="cursor-pointer">
+              {t('interface.messageSignature.identityToggle', 'Identificar-se nas mensagens enviadas (Adiciona seu nome no início)')}
+            </Label>
+          </div>
+
+          <div className="flex justify-end pt-4">
             <Button onClick={handleSaveProfile} disabled={isLoading} className="min-w-[120px]">
               {isLoading ? t('personalData.actions.saving') : t('personalData.actions.saveChanges')}
             </Button>
@@ -875,8 +890,8 @@ const Profile = () => {
             <button
               className={`px-0 reset-base w-full sm:flex-1 rounded-xl outline ${
                 uiSettings.editor_message_key === 'enter'
-                  ? 'outline-primary/30'
-                  : 'outline-border'
+                  ? 'outline-green-500/30'
+                  : 'outline-gray-300'
               }`}
               onClick={() => handleHotKeyChange('enter')}
             >
@@ -886,12 +901,12 @@ const Profile = () => {
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       uiSettings.editor_message_key === 'enter'
-                        ? 'border-primary bg-primary'
-                        : 'border-input'
+                        ? 'border-green-500 bg-green-500'
+                        : 'border-gray-300'
                     }`}
                   >
                     {uiSettings.editor_message_key === 'enter' && (
-                      <div className="w-2 h-2 bg-primary-foreground rounded-full" />
+                      <div className="w-2 h-2 bg-white rounded-full" />
                     )}
                   </div>
                 </div>
@@ -908,8 +923,8 @@ const Profile = () => {
             <button
               className={`px-0 reset-base w-full sm:flex-1 rounded-xl outline ${
                 uiSettings.editor_message_key === 'cmd_enter'
-                  ? 'outline-primary/30'
-                  : 'outline-border'
+                  ? 'outline-green-500/30'
+                  : 'outline-gray-300'
               }`}
               onClick={() => handleHotKeyChange('cmd_enter')}
             >
@@ -921,12 +936,12 @@ const Profile = () => {
                   <div
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                       uiSettings.editor_message_key === 'cmd_enter'
-                        ? 'border-primary bg-primary'
-                        : 'border-input'
+                        ? 'border-green-500 bg-green-500'
+                        : 'border-gray-300'
                     }`}
                   >
                     {uiSettings.editor_message_key === 'cmd_enter' && (
-                      <div className="w-2 h-2 bg-primary-foreground rounded-full" />
+                      <div className="w-2 h-2 bg-white rounded-full" />
                     )}
                   </div>
                 </div>

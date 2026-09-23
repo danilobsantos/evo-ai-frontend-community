@@ -16,12 +16,14 @@ import {
   X,
   Reply,
   PenLine,
+  UserCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AudioRecordingData } from '@/hooks/chat/useAudioRecorder';
 import { useCannedResponses } from '@/hooks/chat/useCannedResponses';
 import { useMessageSignature } from '@/hooks/useMessageSignature';
+import { useMessageIdentity } from '@/hooks/useMessageIdentity';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -118,6 +120,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // 🎯 MESSAGE SIGNATURE: Hook para gerenciar assinatura
+  const { isIdentityEnabled, toggleIdentity, hasIdentity, prependIdentityIfEnabled } =
+    useMessageIdentity();
   const { isSignatureEnabled, toggleSignature, hasSignature, appendSignatureIfEnabled } =
     useMessageSignature();
 
@@ -390,6 +394,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
     if (hasSignature) {
       currentMessage = appendSignatureIfEnabled(currentMessage);
+    }
+
+    if (hasIdentity) {
+      currentMessage = prependIdentityIfEnabled(currentMessage);
     }
 
     setIsSending(true);
@@ -725,7 +733,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
               onPickMedia={() => document.getElementById('composer-file-input-media')?.click()}
               onOpenConversationNote={() => setNotesMode(true)}
               onSchedule={() => setShowScheduleModal(true)}
-              scheduleDisabled={!hasTypedContent}
               onOpenTemplates={isWhatsAppCloud ? handleTemplateClick : undefined}
             />
 
@@ -773,6 +780,28 @@ const MessageInput: React.FC<MessageInputProps> = ({
                   {isSignatureEnabled
                     ? t('messageInput.signature.disable')
                     : t('messageInput.signature.enable')}
+                </div>
+              </div>
+            )}
+
+            {/* Message Identity */}
+            {hasIdentity && !isPendingConversation && (
+              <div className="relative group flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isDisabled || isSending}
+                  className={`h-9 w-9 flex-shrink-0 hover:bg-accent disabled:opacity-50 transition-colors ${
+                    isIdentityEnabled ? 'text-blue-600 dark:text-blue-400' : ''
+                  }`}
+                  onClick={toggleIdentity}
+                >
+                  <UserCircle className="h-4 w-4" />
+                </Button>
+                <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                  {isIdentityEnabled
+                    ? t('messageInput.identity.disable', 'Desativar identificação')
+                    : t('messageInput.identity.enable', 'Ativar identificação')}
                 </div>
               </div>
             )}

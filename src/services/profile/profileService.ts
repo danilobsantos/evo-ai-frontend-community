@@ -62,6 +62,7 @@ class ProfileService {
     return extractData<UserProfile>(response);
   }
 
+
   /**
    * Cancel a pending email change
    */
@@ -84,6 +85,7 @@ class ProfileService {
     editor_message_key?: 'enter' | 'cmd_enter';
     font_size?: string;
     message_signature_enabled?: boolean;
+    agent_name_enabled?: boolean;
     [key: string]: unknown;
   }): Promise<UserProfile> {
     const response = await apiAuth.put('/profile', {

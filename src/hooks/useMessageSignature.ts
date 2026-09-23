@@ -1,6 +1,3 @@
-// React is provided by the application runtime, even when its types are not
-// available in the current TypeScript project configuration.
-// @ts-expect-error React types are resolved by the consuming application.
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -26,21 +23,17 @@ export const useMessageSignature = () => {
 
   // Toggle da assinatura
   const toggleSignature = useCallback(() => {
-    setIsSignatureEnabled((prev: boolean) => {
+    setIsSignatureEnabled(prev => {
       const newValue = !prev;
       localStorage.setItem('message_signature_enabled', String(newValue));
-
+      
       // Persistir no backend
       import('@/services/profile/profileService').then(({ profileService }) => {
-        profileService
-          .updateUISettings({ message_signature_enabled: newValue } as unknown as Parameters<
-            typeof profileService.updateUISettings
-          >[0])
-          .catch(err => {
-            console.error('Failed to save signature preference to backend:', err);
-          });
+        profileService.updateUISettings({ message_signature_enabled: newValue }).catch(err => {
+          console.error('Failed to save signature preference to backend:', err);
+        });
       });
-
+      
       return newValue;
     });
   }, []);
