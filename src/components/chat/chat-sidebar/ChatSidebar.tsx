@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, type CSSProperties } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Button } from '@evoapi/design-system/button';
 import { Checkbox } from '@evoapi/design-system/checkbox';
 import { Input } from '@evoapi/design-system/input';
@@ -49,7 +49,6 @@ import { Conversation, ConversationFilter } from '@/types/chat/api';
 import {
   attachmentLabel,
   mediaTypeFromAttributes,
-  senderNameFromAttributes,
 } from '@/utils/chat/mediaLabels';
 import { formatConversationTime, formatDetailedTime } from '@/utils/time/timeHelpers';
 import { isPhoneBearingChannel } from '@/utils/channelUtils';
@@ -547,12 +546,7 @@ const ChatSidebar = ({
       rawText ||
       (firstAttachmentType ? attachmentLabel(firstAttachmentType) : '') ||
       (fallbackMediaType ? attachmentLabel(fallbackMediaType) : '');
-    // Group conversations: prepend the participant who actually spoke.
-    const senderName =
-      msg && msg.message_type === 'incoming'
-        ? senderNameFromAttributes(msg.content_attributes)
-        : undefined;
-    const preview = senderName ? `${senderName}: ${cleanContent}` : cleanContent;
+    const preview = cleanContent;
     return preview.length > 60 ? preview.substring(0, 60) + '...' : preview;
   };
 
@@ -638,9 +632,9 @@ const ChatSidebar = ({
       data-tour="chat-sidebar"
       className={`
         ${mobileView === 'list' ? 'flex' : 'hidden'} md:flex
-        w-full ${width == null ? 'md:w-96' : 'md:w-[var(--chat-sidebar-width)] md:shrink-0'} border-r bg-card/50 flex-col h-full
+        w-full ${width == null ? 'md:w-96' : 'md:shrink-0'} border-r bg-card/50 flex-col h-full
       `}
-      style={width != null ? ({ '--chat-sidebar-width': `${width}px` } as CSSProperties) : undefined}
+      style={width != null ? { width: `${width}px` } : undefined}
     >
       {/* Search and Filter Header */}
       <div className="p-4 border-b space-y-3">
